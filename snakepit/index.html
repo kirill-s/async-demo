@@ -1,0 +1,63 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Async demo</title>
+<link rel="stylesheet" type="text/css" href="style.css" />
+<script type="text/javascript" src="http://code.jquery.com/jquery-2.2.1.min.js"></script>
+<script type="text/javascript">
+    var ws;
+    $().ready(function () {
+        $("#btnConnect").click(function () {
+
+            $("#status").text("connecting");
+
+            ws = new WebSocket("ws://127.0.0.1:8080/echo");
+            ws.onopen = function () {
+                $("#status").text("connected");
+            };
+            ws.onmessage = function (evt) {
+                $("#status").text(evt.data);
+            };
+            ws.onerror = function (evt) {
+                $("#status").text(evt.message);
+            };
+            ws.onclose = function () {
+                $("#status").text("disconnected");
+            };
+        });
+
+        $(document).keypress(function( event ) {
+            if ( event.which == 13 ) {
+                event.preventDefault();
+            }
+            if (ws && ws.readyState == WebSocket.OPEN) {
+                ws.send(event.which + ", " + event.key);
+            }
+            else {
+                $("#status").text("Connection is closed");
+            }
+        });
+
+        $("#btnDisconnect").click(function () {
+            ws.close();
+        });
+    });
+</script>
+</head>
+<body>
+<div id="status">&nbsp;</div>
+
+<div>
+
+<div>
+<button id="btnConnect">Connect</button>
+</div>
+
+<div>
+<button id="btnDisconnect">Disconnect</button>
+</div>
+
+</div>
+
+</body>
+</html>
