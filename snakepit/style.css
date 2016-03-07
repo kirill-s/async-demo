@@ -1,8 +1,26 @@
-body {
-        font-family: DejaVu Sans Mono,Bitstream Vera Sans Mono,monospace;
-        background-color:#000;
-        color:#fff;
-        font-size:15px;
-        text-align:center;
-        line-height:1.2;
+* {
+    font-family: DejaVu Sans Mono,Bitstream Vera Sans Mono,monospace !important;
+    background-color: black;
+    color: silver;
+    font-size: 11pt;
+    text-align:center;
+}
+
+input {
+    border: 1px solid;
+    padding: 0.5em;
+    border-color: silver;
+    background: black;
+    color: lime;
+    font-size: 1em;
+    text-align: left;
+}
+
+button {
+    border: 0;
+    text-align: center;
+    background: silver;
+    color: green;
+    font-size: 1em;
+    padding: 0.5em;
 }

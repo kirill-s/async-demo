@@ -16,7 +16,7 @@ class Game:
 
     def create_world(self):
         for y in range(0, settings.FIELD_SIZE_Y):
-            self._world.append([(" ", 0)] * FIELD_SIZE_X)
+            self._world.append([(" ", 0)] * settings.FIELD_SIZE_X)
 
     def new_player(self, name, ws):
         self._last_id += 1
@@ -51,7 +51,6 @@ class Game:
             self.apply_render(render)
         del self._players[player._id]
         del player
-
 
     def any_alive_players(self):
         return any([p.alive for p in self._players.values()])
@@ -99,14 +98,13 @@ class Game:
             self._send_all_multi(messages)
 
     def apply_render(self, render):
-        # apply to local
+        messages = []
         for draw in render:
+            # apply to local
             self.world[draw.y][draw.x].char = draw.char
             self.world[draw.y][draw.x].color = draw.color
-        # send messages
-        messages = []
-        for r in render:
-            messages.append(["r"] + list(r))
+            # send messages
+            messages.append(["r"] + list(draw))
         self._send_all_multi(messages)
 
 

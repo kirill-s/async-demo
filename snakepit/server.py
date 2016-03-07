@@ -22,6 +22,7 @@ async def handle(request):
 
 
 async def wshandler(request):
+    print("Connected")
     app = request.app
     game = app["game"]
     ws = web.WebSocketResponse()
@@ -34,8 +35,13 @@ async def wshandler(request):
             print("Got message %s" % msg.data)
 
             data = json.loads(msg.data)
+            if type(data) == int and player:
+                # Interpret as key code
+                player.keypress(data[0])
+            if type(data) != list:
+                continue
             if not player:
-                if data[0] == "set_name":
+                if data[0] == "new_player":
                     player = game.new_player(data[1], ws)
             elif data[0] == "join":
                 if app["game_cycle"] is None or \
@@ -43,14 +49,13 @@ async def wshandler(request):
                     app["game_cycle"] = asyncio.ensure_future(game_cycle(app))
                     print("Starting game cycle")
                 game.join(player)
-            else:
-                # Interpret as key code
-                player.keypress(data[0])
 
         elif msg.tp == web.MsgType.close:
             if player:
                 game.player_disconnected(player)
-            if not game.any_alive_players():
+            if app["game_cycle"] and\
+               not app["game_cycle"].cancelled() and\
+               not game.any_alive_players():
                 app["game_cycle"].cancel()
                 print("Stopping game cycle")
             print("Closed connection")
@@ -71,7 +76,7 @@ app = web.Application()
 app["game"] = Game()
 app["game_cycle"] = None
 
-app.router.add_route('GET', '/game', wshandler)
+app.router.add_route('GET', '/connect', wshandler)
 app.router.add_route('GET', '/{name}', handle)
 app.router.add_route('GET', '/', handle)
 
