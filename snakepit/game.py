@@ -11,7 +11,6 @@ class Game:
         self._last_id = 0
         self._colors = list(range(0, settings.MAX_PLAYERS))
         self._players = {}
-        self._disconnected = []
         self._world = []
         self.create_world()
 
@@ -24,35 +23,35 @@ class Game:
         player_id = self._last_id
 
         self._send_personal(ws, "world", json.dumps(self._world))
-        player = Player(ws)
+        player = Player(player_id, ws)
         self._players[player_id] = player
-        return player_id
+        return player
 
-    def join(self, player_id):
+    def join(self, player):
+        if player.alive:
+            return
         if len(self._colors) == 0:
             self._send_personal(ws, "error", "Maximum players reached")
             return
         color = self._colors(randint(0, len(self._colors)))
         self._colors.remove(color)
-        self._players[player_id].join(color)
-        self._send_all("p_join", player_id, name)
+        player.join(color)
+        self._send_all("p_join", player._id, name)
 
-    def player_keypress(player_id, keycode):
-        self._players[player_id].keypress(keycode)
+    def game_over(self, player):
+        player.alive = False
+        self._send_all("p_gameover", player._id)
+        self._colors.append(player.color)
 
-    def game_over(self, player_id):
-        self._players[player_id].alive = False
-        self._send_all("p_gameover", player_id)
-        color = self._players[player_id].color
-        self._colors.append(color)
+    def player_disconnected(self, player):
+        player.ws = None
+        if player.alive:
+            self.game_over(player)
+            render = player.render_game_over()
+            self.apply_render(render)
+        del self._players[player._id]
+        del player
 
-    def player_disconnect(self, player_id):
-        p = self._players[player_id]
-        if p.alive:
-            self.game_over(player_id)
-            render = p.render_game_over()
-            self._send_all_render(render)
-        del p, self._players[player_id]
 
     def any_alive_players(self):
         return any([p.alive for p in self._players.values()])
@@ -69,13 +68,13 @@ class Game:
                 # check next position's content
                 pos = p.next_position()
                 # check bounds
-                if p.x < 0 or p.x >= settings.FIELD_SIZE_X or\
-                   p.y < 0 or p.y >= settings.FIELD_SIZE_Y:
+                if pos.x < 0 or pos.x >= settings.FIELD_SIZE_X or\
+                   pos.y < 0 or pos.y >= settings.FIELD_SIZE_Y:
                     self.game_over(p_id)
                     render_all += p.render_game_over()
                     continue
 
-                char = self.world[pos.y, pos.x].char
+                char = self.world[pos.y][pos.x].char
                 grow = 0
                 if char.isdigit():
                     # start growing next turn in case we eaten a digit
@@ -94,17 +93,22 @@ class Game:
                 render_all = p.render_new_snake()
 
         # send all render messages
-        self._send_all_render(render_all)
+        self.apply_render(render_all)
         # send additional messages
         if messages:
             self._send_all_multi(messages)
 
-
-    def _send_all_render(self, render):
+    def apply_render(self, render):
+        # apply to local
+        for draw in render:
+            self.world[draw.y][draw.x].char = draw.char
+            self.world[draw.y][draw.x].color = draw.color
+        # send messages
         messages = []
         for r in render:
             messages.append(["r"] + list(r))
         self._send_all_multi(messages)
+
 
     def _send_personal(self, ws, *args):
         msg = json.dumps([args])

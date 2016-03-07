@@ -23,7 +23,8 @@ class Player:
               40: DOWN
               }
 
-    def __init__(self, ws):
+    def __init__(self, player_id, ws):
+        self._id = player_id
         self.ws = ws
         self.alive = False
         self.direction = None
@@ -59,8 +60,8 @@ class Player:
 
     def next_position(self):
         # next position of the snake's head
-        return Position(self.snake[0].x + self.direction.x,
-                        self.snake[0].y + self.direction.y)
+        return Position(self.snake[0].x + self.direction.xdir,
+                        self.snake[0].y + self.direction.ydir)
 
     def render_move(self):
         # moving snake to the next position
