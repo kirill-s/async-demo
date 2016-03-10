@@ -3,6 +3,7 @@ import json
 
 import settings
 from player import Player
+from datatypes import Char
 
 
 class Game:
@@ -16,15 +17,15 @@ class Game:
 
     def create_world(self):
         for y in range(0, settings.FIELD_SIZE_Y):
-            self._world.append([(" ", 0)] * settings.FIELD_SIZE_X)
+            self._world.append([Char(" ", 0)] * settings.FIELD_SIZE_X)
 
     def new_player(self, name, ws):
-        self._send_personal(ws, "handshake", name)
         self._last_id += 1
         player_id = self._last_id
+        self._send_personal(ws, "handshake", name, player_id)
 
         self._send_personal(ws, "world", self._world)
-        player = Player(player_id, ws)
+        player = Player(player_id, name, ws)
         self._players[player_id] = player
         return player
 
@@ -37,12 +38,12 @@ class Game:
         # pick a color, try to have all different colors
         if not len(self._colors):
             self._colors = list(range(0, settings.NUM_COLORS))
-        color = self._colors(randint(0, len(self._colors)))
+        color = self._colors[randint(0, len(self._colors) - 1)]
         self._colors.remove(color)
         # init snake
-        player.join(color)
+        player.new_snake(color)
         # notify all about new player
-        self._send_all("p_join", player._id, name)
+        self._send_all("p_joined", player._id, player.name, color)
 
     def game_over(self, player):
         player.alive = False
@@ -61,7 +62,7 @@ class Game:
     def count_alive_players(self):
         return sum([int(p.alive) for p in self._players.values()])
 
-    def end_turn(self):
+    def next_frame(self):
         messages = []
         render_all = []
         for p_id, p in self._players.items():
@@ -69,33 +70,35 @@ class Game:
             if not p.alive:
                 continue
             # check if snake already exists
-            elif len(p.snake):
+            if len(p.snake):
                 # check next position's content
                 pos = p.next_position()
                 # check bounds
                 if pos.x < 0 or pos.x >= settings.FIELD_SIZE_X or\
                    pos.y < 0 or pos.y >= settings.FIELD_SIZE_Y:
-                    self.game_over(p_id)
+                    self.game_over(p)
                     render_all += p.render_game_over()
                     continue
 
-                char = self.world[pos.y][pos.x].char
+                char = self._world[pos.y][pos.x].char
                 grow = 0
                 if char.isdigit():
                     # start growing next turn in case we eaten a digit
                     grow = int(char)
                     p.score += grow
-                    messages = ["score", p_id, p.score]
+                    messages.append(["score", p_id, p.score])
                 elif char != " ":
-                    self.game_over(p_id)
+                    self.game_over(p)
                     render_all += p.render_game_over()
                     continue
 
-                render_all = p.render_move()
+                render_all += p.render_move()
                 p.grow = grow
             else:
                 # newborn snake
-                render_all = p.render_new_snake()
+                render_all += p.render_new_snake()
+
+        #render_all += self.generate_object()
 
         # send all render messages
         self.apply_render(render_all)
@@ -107,8 +110,7 @@ class Game:
         messages = []
         for draw in render:
             # apply to local
-            self.world[draw.y][draw.x].char = draw.char
-            self.world[draw.y][draw.x].color = draw.color
+            self._world[draw.y][draw.x] = Char(draw.char, draw.color)
             # send messages
             messages.append(["r"] + list(draw))
         self._send_all_multi(messages)

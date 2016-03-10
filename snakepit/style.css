@@ -4,8 +4,14 @@
     color: silver;
     font-size: 11pt;
     text-align:center;
-    line-height: 0.8em;
+    line-height: 1.2em;
 }
+
+/*body {
+    -ms-transform: scale(1.2,1); /* IE 9
+    -webkit-transform: scale(1.2,1); /* Safari
+    transform: scale(1.2,1); /* Standard syntax
+}*/
 
 input {
     border: 1px solid;
@@ -41,7 +47,6 @@ button {
 }
 
 #btnJoin {
-    margin-right: 5em;
     color: maroon;
 }
 #btnDisconnect {
@@ -52,25 +57,38 @@ button {
     display: none;
 }
 
-#activePlayers {
+#activePlayers, #topScores {
+    width: 25em;
+    color: white;
     display: inline-block;
     vertical-align: top;
 }
 
+#activePlayers {
+    text-align: right;
+}
+
+#topScores {
+    text-align: left;
+}
+
 #playField {
-    margin-top: 2em;
+    margin-top: 1em;
 }
 
 #worldHolder {
     display: inline-block;
     border: 1px solid;
     border-color: silver;
+    padding: 0.3em;
+    line-height: 1em;
 }
 
 #world {
     padding:0;
     border:0;
     margin:0;
+    line-height: 1em;
 }
 
 #world .td {
@@ -79,4 +97,5 @@ button {
 
     padding:0;
     margin:0;
+    line-height: 1em;
 }

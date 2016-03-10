@@ -10,7 +10,7 @@ class Player:
     BODY_CHAR = "@"
     TAIL_CHAR = "*"
 
-    UP = Vector(0, 1)
+    UP = Vector(0, -1)
     DOWN = Vector(0, 1)
     LEFT = Vector(-1, 0)
     RIGHT = Vector(1, 0)
@@ -23,13 +23,14 @@ class Player:
               40: DOWN
               }
 
-    def __init__(self, player_id, ws):
+    def __init__(self, player_id, name, ws):
         self._id = player_id
+        self.name = name
         self.ws = ws
         self.alive = False
         self.direction = None
 
-    def join(self, color):
+    def new_snake(self, color):
         self.color = color
         self.grow = 0
         self.score = 0
@@ -49,13 +50,13 @@ class Player:
         for i in range(0, settings.INIT_LENGHT):
             self.snake.appendleft(pos)
             if i == 0:
-                char = self.HEAD_CHAR
-            elif i == settings.INIT_LENGHT - 1:
                 char = self.TAIL_CHAR
+            elif i == settings.INIT_LENGHT - 1:
+                char = self.HEAD_CHAR
             else:
                 char = self.BODY_CHAR
-            render.append(Draw(x, y, char, color))
-            pos = self.next_position(pos)
+            render.append(Draw(pos.x, pos.y, char, self.color))
+            pos = self.next_position()
         return render
 
     def next_position(self):

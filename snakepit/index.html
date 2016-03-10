@@ -7,6 +7,7 @@
 <script type="text/javascript">
     var ws;
     var playerName;
+    var playerId;
 
     $().ready(function () {
 
@@ -27,6 +28,10 @@
             $("#playScreen").hide();
             $("#connectForm").show();
             $(document).unbind("keypress", keyHandler);
+        });
+
+        $("#btnJoin").click(function () {
+            sendMessage(["join"]);
         });
     });
 
@@ -60,10 +65,35 @@
             switch(cmd){
                 case("handshake"):
                     $("#username").text(args[1]);
+                    playerId = args[2];
                     break
                 case("world"):
                     initWorld(args[1]);
                     break
+                case("r"):
+                    var x = args[1];
+                    var y = args[2];
+                    var cell_id = '#cell' + y + '_' + x;
+                    $(cell_id).text(args[3]);
+                    $(cell_id).attr('class', "color" + args[4]);
+                    break
+                case("p_joined"):
+                    var id = args[1];
+                    var name = args[2];
+                    var color = args[3];
+                    $("#activePlayers").append('<div id="player' + id
+                        + '" class="color' + color +'">'
+                        + name + '</div>');
+                    if(id == playerId)
+                        $("#btnJoin").attr("visibility", "hidden");
+                    break
+                case("p_gameover"):
+                    id = args[1]
+                    $("#player" + id).remove();
+                    if(id == playerId)
+                        $("#btnJoin").attr("visibility", "visible");
+                    break
+
             }
         }
     }
@@ -117,18 +147,18 @@
 
     <div id="playScreen">
         <div id="userForm">
-            Welcome to the server, <span id="username"></span>! Press "Join" to start game.
+            Welcome to server, <span id="username"></span>! Invite some friends and Join.
         </div>
         <div id="userButtons">
             <button id="btnJoin">Join!</button>
-            <button id="btnDisconnect">Close</button>
         </div>
 
         <div id="playField">
-            <div id="activePlayers">player name</div>
+            <div id="activePlayers">Active players</div>
             <div id="worldHolder">
                 <table id="world" cellspacing="0" cellpadding="0"></table>
             </div>
+            <div id="topScores">Top scores</div>
         </div>
 
     </div>

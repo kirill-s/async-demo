@@ -37,17 +37,17 @@ async def wshandler(request):
             data = json.loads(msg.data)
             if type(data) == int and player:
                 # Interpret as key code
-                player.keypress(data[0])
+                player.keypress(data)
             if type(data) != list:
                 continue
             if not player:
                 if data[0] == "new_player":
                     player = game.new_player(data[1], ws)
             elif data[0] == "join":
-                if app["game_cycle"] is None or \
-                   app["game_cycle"].cancelled():
-                    app["game_cycle"] = asyncio.ensure_future(game_cycle(app))
-                    print("Starting game cycle")
+                if app["game_loop"] is None or \
+                   app["game_loop"].cancelled():
+                    app["game_loop"] = asyncio.ensure_future(game_loop(app))
+                    print("Starting game loop")
                 game.join(player)
 
         elif msg.tp == web.MsgType.close:
@@ -55,26 +55,26 @@ async def wshandler(request):
 
     if player:
         game.player_disconnected(player)
-    if app["game_cycle"] and\
-       not app["game_cycle"].cancelled() and\
-       not game.count_alive_players():
-        app["game_cycle"].cancel()
-        print("Stopping game cycle")
+
     print("Closed connection")
     return ws
 
-async def game_cycle(app):
+async def game_loop(app):
     while 1:
-        app["game"].end_turn()
-        if not game.count_alive_players():
-            app["game_cycle"].cancel()
+        app["game"].next_frame()
+        if not app["game"].count_alive_players():
+            print("Stopping game loop")
+            app["game_loop"].cancel()
         await asyncio.sleep(1./settings.GAME_SPEED)
 
+
+event_loop = asyncio.get_event_loop()
+event_loop.set_debug(True)
 
 app = web.Application()
 
 app["game"] = Game()
-app["game_cycle"] = None
+app["game_loop"] = None
 
 app.router.add_route('GET', '/connect', wshandler)
 app.router.add_route('GET', '/{name}', handle)
