@@ -9,7 +9,7 @@ class Game:
 
     def __init__(self):
         self._last_id = 0
-        self._colors = list(range(0, settings.MAX_PLAYERS))
+        self._colors = []
         self._players = {}
         self._world = []
         self.create_world()
@@ -19,10 +19,11 @@ class Game:
             self._world.append([(" ", 0)] * settings.FIELD_SIZE_X)
 
     def new_player(self, name, ws):
+        self._send_personal(ws, "handshake", name)
         self._last_id += 1
         player_id = self._last_id
 
-        self._send_personal(ws, "world", json.dumps(self._world))
+        self._send_personal(ws, "world", self._world)
         player = Player(player_id, ws)
         self._players[player_id] = player
         return player
@@ -30,12 +31,17 @@ class Game:
     def join(self, player):
         if player.alive:
             return
-        if len(self._colors) == 0:
+        if self.count_alive_players() == settings.MAX_PLAYERS:
             self._send_personal(ws, "error", "Maximum players reached")
             return
+        # pick a color, try to have all different colors
+        if not len(self._colors):
+            self._colors = list(range(0, settings.NUM_COLORS))
         color = self._colors(randint(0, len(self._colors)))
         self._colors.remove(color)
+        # init snake
         player.join(color)
+        # notify all about new player
         self._send_all("p_join", player._id, name)
 
     def game_over(self, player):
@@ -52,8 +58,8 @@ class Game:
         del self._players[player._id]
         del player
 
-    def any_alive_players(self):
-        return any([p.alive for p in self._players.values()])
+    def count_alive_players(self):
+        return sum([int(p.alive) for p in self._players.values()])
 
     def end_turn(self):
         messages = []

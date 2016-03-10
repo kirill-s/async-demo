@@ -4,6 +4,7 @@
     color: silver;
     font-size: 11pt;
     text-align:center;
+    line-height: 0.8em;
 }
 
 input {
@@ -23,4 +24,59 @@ button {
     color: green;
     font-size: 1em;
     padding: 0.5em;
+}
+
+.color0 { color:white }
+.color1 { color:red }
+.color2 { color:yellow }
+.color3 { color:lime }
+.color4 { color:aqua }
+.color5 { color:blue }
+.color6 { color:fuchsia }
+.color7 { color:orange }
+
+
+#userButtons {
+    margin-top: 1em;
+}
+
+#btnJoin {
+    margin-right: 5em;
+    color: maroon;
+}
+#btnDisconnect {
+    color: black;
+}
+
+#playScreen {
+    display: none;
+}
+
+#activePlayers {
+    display: inline-block;
+    vertical-align: top;
+}
+
+#playField {
+    margin-top: 2em;
+}
+
+#worldHolder {
+    display: inline-block;
+    border: 1px solid;
+    border-color: silver;
+}
+
+#world {
+    padding:0;
+    border:0;
+    margin:0;
+}
+
+#world .td {
+    width: 1em;
+    height: 1em;
+
+    padding:0;
+    margin:0;
 }

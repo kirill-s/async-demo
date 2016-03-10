@@ -51,22 +51,22 @@ async def wshandler(request):
                 game.join(player)
 
         elif msg.tp == web.MsgType.close:
-            if player:
-                game.player_disconnected(player)
-            if app["game_cycle"] and\
-               not app["game_cycle"].cancelled() and\
-               not game.any_alive_players():
-                app["game_cycle"].cancel()
-                print("Stopping game cycle")
-            print("Closed connection")
             break
 
+    if player:
+        game.player_disconnected(player)
+    if app["game_cycle"] and\
+       not app["game_cycle"].cancelled() and\
+       not game.count_alive_players():
+        app["game_cycle"].cancel()
+        print("Stopping game cycle")
+    print("Closed connection")
     return ws
 
 async def game_cycle(app):
     while 1:
         app["game"].end_turn()
-        if not game.any_alive_players():
+        if not game.count_alive_players():
             app["game_cycle"].cancel()
         await asyncio.sleep(1./settings.GAME_SPEED)
 
