@@ -45,8 +45,11 @@ async def wshandler(request):
                     player = game.new_player(data[1], ws)
             elif data[0] == "join":
                 if app["game_loop"] is None or \
-                   app["game_loop"].cancelled():
+                   app["game_loop"].done():
                     app["game_loop"] = asyncio.ensure_future(game_loop(app))
+                    # this is required to propagate exceptions
+                    app["game_loop"].add_done_callback(lambda f: f.result()
+                                                       if f.exception() else None)
                     print("Starting game loop")
                 game.join(player)
 
@@ -64,7 +67,7 @@ async def game_loop(app):
         app["game"].next_frame()
         if not app["game"].count_alive_players():
             print("Stopping game loop")
-            app["game_loop"].cancel()
+            break
         await asyncio.sleep(1./settings.GAME_SPEED)
 
 

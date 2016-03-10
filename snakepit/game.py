@@ -3,7 +3,7 @@ import json
 
 import settings
 from player import Player
-from datatypes import Char
+from datatypes import Char, Draw
 
 
 class Game:
@@ -93,18 +93,31 @@ class Game:
                     continue
 
                 render_all += p.render_move()
-                p.grow = grow
+                p.grow += grow
             else:
                 # newborn snake
                 render_all += p.render_new_snake()
 
-        #render_all += self.generate_object()
+        render_all += self.spawn_objects()
 
         # send all render messages
         self.apply_render(render_all)
         # send additional messages
         if messages:
             self._send_all_multi(messages)
+
+    def spawn_objects(self):
+        render = []
+        if randint(1, 100) <= settings.DIGIT_SPAWN_RATE:
+            char = str(randint(1,9))
+            x = randint(0, settings.FIELD_SIZE_X - 1)
+            y = randint(0, settings.FIELD_SIZE_Y - 1)
+            color = randint(0, settings.NUM_COLORS)
+            render += [Draw(x, y, char, color)]
+        #if randint(1, 100) <= settings.STONE_SPAWN_RATE:
+        #    render += [Draw(x, y, '#', 0)]
+        return render
+
 
     def apply_render(self, render):
         messages = []
