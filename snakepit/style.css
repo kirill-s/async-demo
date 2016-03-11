@@ -37,7 +37,7 @@ button {
 .color2 { color:yellow }
 .color3 { color:lime }
 .color4 { color:aqua }
-.color5 { color:blue }
+.color5 { color:#4444FF }
 .color6 { color:fuchsia }
 .color7 { color:orange }
 
@@ -58,14 +58,23 @@ button {
 }
 
 #activePlayers, #topScores {
-    width: 25em;
+    width: 13em;
     color: white;
     display: inline-block;
     vertical-align: top;
 }
 
-#activePlayers {
+#activePlayers .name, #topScores .name {
+    width: 10em;
+    text-align: left;
+}
+#activePlayers .score, #topScores .score {
+    width: 3em;
     text-align: right;
+}
+
+#activePlayers div, #topScores div {
+    display: inline-block;
 }
 
 #topScores {
@@ -89,6 +98,7 @@ button {
     border:0;
     margin:0;
     line-height: 1em;
+    table-layout: fixed
 }
 
 #world .td {

@@ -19,12 +19,23 @@ class Game:
         for y in range(0, settings.FIELD_SIZE_Y):
             self._world.append([Char(" ", 0)] * settings.FIELD_SIZE_X)
 
+    def reset_world(self):
+        for y in range(0, settings.FIELD_SIZE_Y):
+            for x in range(0, settings.FIELD_SIZE_X):
+                if self._world[y][x].char != " ":
+                    self._world[y][x] = Char(" ", 0)
+        self._send_all("reset_world")
+
     def new_player(self, name, ws):
         self._last_id += 1
         player_id = self._last_id
         self._send_personal(ws, "handshake", name, player_id)
 
         self._send_personal(ws, "world", self._world)
+        for p in self._players.values():
+            if p.alive:
+                self._send_personal(ws, "p_joined", p._id, p.name, p.color, p.score)
+
         player = Player(player_id, name, ws)
         self._players[player_id] = player
         return player
@@ -37,18 +48,23 @@ class Game:
             return
         # pick a color, try to have all different colors
         if not len(self._colors):
-            self._colors = list(range(0, settings.NUM_COLORS))
+            # color 0 is reserved for interface and stones
+            self._colors = list(range(1, settings.NUM_COLORS))
         color = self._colors[randint(0, len(self._colors) - 1)]
         self._colors.remove(color)
         # init snake
         player.new_snake(color)
         # notify all about new player
-        self._send_all("p_joined", player._id, player.name, color)
+        self._send_all("p_joined", player._id, player.name, color, 0)
 
     def game_over(self, player):
         player.alive = False
         self._send_all("p_gameover", player._id)
         self._colors.append(player.color)
+
+        if not self.count_alive_players():
+            self.render_text(" >>> GAME OVER <<< ",
+                             randint(0, len(self._colors) - 1))
 
     def player_disconnected(self, player):
         player.ws = None
@@ -86,7 +102,7 @@ class Game:
                     # start growing next turn in case we eaten a digit
                     grow = int(char)
                     p.score += grow
-                    messages.append(["score", p_id, p.score])
+                    messages.append(["p_score", p_id, p.score])
                 elif char != " ":
                     self.game_over(p)
                     render_all += p.render_game_over()
@@ -94,30 +110,51 @@ class Game:
 
                 render_all += p.render_move()
                 p.grow += grow
+
+                # spawn digits proportionally to the number of snakes
+                render_all += self.spawn_digit()
             else:
                 # newborn snake
                 render_all += p.render_new_snake()
+                # and it's birthday present
+                render_all += self.spawn_digit(right_now=True)
 
-        render_all += self.spawn_objects()
-
+        render_all += self.spawn_stone()
         # send all render messages
         self.apply_render(render_all)
         # send additional messages
         if messages:
             self._send_all_multi(messages)
 
-    def spawn_objects(self):
-        render = []
-        if randint(1, 100) <= settings.DIGIT_SPAWN_RATE:
-            char = str(randint(1,9))
+    def _get_spawn_place(self):
+        x = None
+        y = None
+        for i in range(0,2):
             x = randint(0, settings.FIELD_SIZE_X - 1)
             y = randint(0, settings.FIELD_SIZE_Y - 1)
-            color = randint(0, settings.NUM_COLORS)
-            render += [Draw(x, y, char, color)]
-        #if randint(1, 100) <= settings.STONE_SPAWN_RATE:
-        #    render += [Draw(x, y, '#', 0)]
+            if self._world[y][x].char == " ":
+                break
+        return x, y
+
+    def spawn_digit(self, right_now=False):
+        render = []
+        if right_now or\
+           randint(1, 100) <= settings.DIGIT_SPAWN_RATE:
+            x, y = self._get_spawn_place()
+            if x and y:
+                char = str(randint(1,9))
+                color = randint(0, settings.NUM_COLORS)
+                render += [Draw(x, y, char, color)]
         return render
 
+    def spawn_stone(self, right_now=False):
+        render = []
+        if right_now or\
+           randint(1, 100) <= settings.STONE_SPAWN_RATE:
+            x, y = self._get_spawn_place()
+            if x and y:
+                render += [Draw(x, y, '#', 0)]
+        return render
 
     def apply_render(self, render):
         messages = []
@@ -128,6 +165,14 @@ class Game:
             messages.append(["r"] + list(draw))
         self._send_all_multi(messages)
 
+    def render_text(self, text, color):
+        # render in the center of play field
+        posy = int(settings.FIELD_SIZE_Y / 2)
+        posx = int(settings.FIELD_SIZE_X / 2 - len(text)/2)
+        render = []
+        for i in range(0, len(text)):
+            render.append(Draw(posx + i, posy, text[i], color))
+        self.apply_render(render)
 
     def _send_personal(self, ws, *args):
         msg = json.dumps([args])

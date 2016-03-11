@@ -15,7 +15,8 @@
             playerName = $("#playerName").val()
             $("#status").text("connecting...");
 
-            ws = new WebSocket("ws://127.0.0.1:8080/connect");
+            ws_url = "ws://" + location.host + "/connect"
+            ws = new WebSocket(ws_url);
             ws.onopen = openHandler;
             ws.onmessage = messageHandler;
             ws.onerror = function (e) {
@@ -49,7 +50,7 @@
         $("#connectForm").hide();
         $("#playScreen").show();
 
-        $(document).bind("keypress", keyHandler);
+        $(document).bind("keydown", keyHandler);
 
     }
 
@@ -70,30 +71,40 @@
                 case("world"):
                     initWorld(args[1]);
                     break
+                case("reset_world"):
+                    resetWorld();
+                    break
                 case("r"):
                     var x = args[1];
                     var y = args[2];
                     var cell_id = '#cell' + y + '_' + x;
-                    $(cell_id).text(args[3]);
+                    var symbol = args[3];
+                    if(symbol == " ")
+                        symbol = "&nbsp;";
+                    $(cell_id).html(symbol);
                     $(cell_id).attr('class', "color" + args[4]);
                     break
                 case("p_joined"):
                     var id = args[1];
                     var name = args[2];
                     var color = args[3];
-                    $("#activePlayers").append('<div id="player' + id
-                        + '" class="color' + color +'">'
-                        + name + '</div>');
+                    var score = args[4];
+                    addPlayer(id, color, name, score);
+
                     if(id == playerId)
-                        $("#btnJoin").attr("visibility", "hidden");
+                        $("#btnJoin").css("visibility", "hidden");
                     break
                 case("p_gameover"):
-                    id = args[1]
+                    id = args[1];
                     $("#player" + id).remove();
                     if(id == playerId)
-                        $("#btnJoin").attr("visibility", "visible");
+                        $("#btnJoin").css("visibility", "visible");
                     break
-
+                case("p_score"):
+                    id = args[1];
+                    score = args[2];
+                    $("#player" + id + " .score").text(score);
+                    break
             }
         }
     }
@@ -116,17 +127,29 @@
         $("#world").html(tableContent);
     }
 
+    function resetWorld() {
+        $("#world td").html("&nbsp;");
+    }
+
+    function addPlayer(id, color, name, score) {
+        var color_class = 'color' + color;
+        $("#activePlayers").append('<div id="player' + id + '">'
+                        + '<div class="name ' + color_class +'">' + name + '</div>'
+                        + '<div class="score ' + color_class + '">' + score + '</div></div>');
+    }
+
     function keyHandler(event) {
-        var code = event.which ? event.which : event.keyCode;
-        if ( code == 13 ) {
-            event.preventDefault();
-        }
+        var code = event.keyCode;
+        if (event.charCode && code == 0)
+             code = event.charCode;
+
         if (ws && ws.readyState == WebSocket.OPEN) {
             ws.send(code);
         }
         else {
             $("#status").text("Connection is closed");
         }
+        //event.preventDefault();
     }
 
 </script>
@@ -141,7 +164,7 @@
 <div style="margin-top:1em">
     <div id="connectForm">
         <span style="color: white">Name</span>
-        <input id="playerName" type="text" maxlength="20" />
+        <input id="playerName" type="text" maxlength="15" />
         <button id="btnConnect">Connect</button>
     </div>
 

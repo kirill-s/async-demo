@@ -9,5 +9,6 @@ FIELD_SIZE_Y = 25
 
 INIT_LENGHT = 3
 
-DIGIT_SPAWN_RATE = 20  # probability to spawn per frame in %
-STONE_SPAWN_RATE = 10
+DIGIT_SPAWN_RATE = 5  # probability to spawn per frame in %
+STONE_SPAWN_RATE = 5  # note that digit spawn calculated for every snake
+                      # while stone spawn is calculated once per frame

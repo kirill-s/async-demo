@@ -10,6 +10,10 @@ class Player:
     BODY_CHAR = "@"
     TAIL_CHAR = "*"
 
+    DEAD_HEAD_CHAR = "x"
+    DEAD_BODY_CHAR = "@"
+    DEAD_TAIL_CHAR = "+"
+
     UP = Vector(0, -1)
     DOWN = Vector(0, 1)
     LEFT = Vector(-1, 0)
@@ -89,13 +93,22 @@ class Player:
 
     def render_game_over(self):
         render = []
-        # remove snake from the field
-        for pos in self.snake:
-            render.append(Draw(pos.x, pos.y, " ", 0))
+        # dead snake
+        for i in range(0, len(self.snake)):
+            pos = self.snake[i]
+            if i == 0:
+                render.append(Draw(pos.x, pos.y, self.DEAD_HEAD_CHAR, 0))
+            elif i == len(self.snake) - 1:
+                render.append(Draw(pos.x, pos.y, self.DEAD_TAIL_CHAR, 0))
+            else:
+                render.append(Draw(pos.x, pos.y, self.DEAD_BODY_CHAR, 0))
         return render
 
     def keypress(self, code):
         direction = self.keymap.get(code)
         if direction:
-            self.direction = direction
+            # do not move in the opposite direction
+            if not (direction.xdir == -self.direction.xdir and
+                    direction.ydir == -self.direction.ydir):
+                self.direction = direction
 
