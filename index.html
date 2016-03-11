@@ -58,7 +58,7 @@
         //$("#status").text(e.data);
         json = JSON.parse(e.data);
         if (!(json[0] instanceof Array))
-            json = [json]
+            json = [json];
 
         for(var i = 0; i < json.length; i++){
             var args = json[i];
