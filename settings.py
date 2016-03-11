@@ -1,5 +1,5 @@
 
-GAME_SPEED = 3.0  # fps, the more the faster
+GAME_SPEED = 2.5  # fps, the more the faster
 
 MAX_PLAYERS = 10
 NUM_COLORS = 7  # set according to the number of css classes
