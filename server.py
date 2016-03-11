@@ -1,3 +1,4 @@
+import os
 import asyncio
 import json
 from aiohttp import web
@@ -85,4 +86,11 @@ app.router.add_route('GET', '/connect', wshandler)
 app.router.add_route('GET', '/{name}', handle)
 app.router.add_route('GET', '/', handle)
 
-web.run_app(app, port=5000)
+# get port for heroku
+port = os.environ.get('PORT')
+if port:
+    port = int(port)
+else:
+    port = 5000
+
+web.run_app(app, port=port)
