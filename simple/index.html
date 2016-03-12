@@ -10,7 +10,8 @@
 
             $("#status").text("connecting");
 
-            ws = new WebSocket("ws://127.0.0.1:8080/echo");
+            ws_url = "ws://" + location.host + "/connect"
+            ws = new WebSocket(ws_url);
             ws.onopen = function () {
                 $("#status").text("connected");
             };
@@ -26,16 +27,18 @@
         });
 
         $(document).keypress(function( event ) {
-            if ( event.which == 13 ) {
-                event.preventDefault();
-            }
+            var code = event.keyCode;
+            if (!code && event.charCode)
+                 code = event.charCode;
+
             if (ws && ws.readyState == WebSocket.OPEN) {
-                ws.send(event.which + ", " + event.key);
+                ws.send(code);
+                event.preventDefault();
             }
             else {
                 $("#status").text("Connection is closed");
             }
-        });
+        }
 
         $("#btnDisconnect").click(function () {
             ws.close();

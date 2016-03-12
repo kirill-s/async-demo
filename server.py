@@ -45,12 +45,9 @@ async def wshandler(request):
                 if data[0] == "new_player":
                     player = game.new_player(data[1], ws)
             elif data[0] == "join":
-                if app["game_loop"] is None or \
-                   app["game_loop"].done():
-                    app["game_loop"] = asyncio.ensure_future(game_loop(game))
-                    # this is required to propagate exceptions
-                    app["game_loop"].add_done_callback(lambda f: f.result()
-                                                       if f.exception() else None)
+                if not game.running:
+                    asyncio.ensure_future(game_loop(game))
+
                     print("Starting game loop")
                     game.reset_world()
 
@@ -66,12 +63,14 @@ async def wshandler(request):
     return ws
 
 async def game_loop(game):
+    game.running = True
     while 1:
         game.next_frame()
         if not game.count_alive_players():
             print("Stopping game loop")
             break
         await asyncio.sleep(1./settings.GAME_SPEED)
+    game.running = False
 
 
 event_loop = asyncio.get_event_loop()
@@ -80,7 +79,6 @@ event_loop.set_debug(True)
 app = web.Application()
 
 app["game"] = Game()
-app["game_loop"] = None
 
 app.router.add_route('GET', '/connect', wshandler)
 app.router.add_route('GET', '/{name}', handle)

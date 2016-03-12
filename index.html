@@ -140,16 +140,16 @@
 
     function keyHandler(event) {
         var code = event.keyCode;
-        if (event.charCode && code == 0)
+        if (!code && event.charCode)
              code = event.charCode;
 
         if (ws && ws.readyState == WebSocket.OPEN) {
             ws.send(code);
+            event.preventDefault();
         }
         else {
             $("#status").text("Connection is closed");
         }
-        //event.preventDefault();
     }
 
 </script>

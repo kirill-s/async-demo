@@ -11,39 +11,41 @@ async def wshandler(request):
     app = request.app
     ws = web.WebSocketResponse()
     await ws.prepare(request)
-
-    if app["game_loop"] is None or \
-       app["game_loop"].cancelled():
-        app["game_loop"] = asyncio.ensure_future(game_loop(app))
     app["sockets"].append(ws)
+
+    if app["game_is_running"] == False:
+        asyncio.ensure_future(game_loop(app))
     while 1:
         msg = await ws.receive()
         if msg.tp == web.MsgType.text:
-            ws.send_str("Hello, {}".format(msg.data))
             print("Got message %s" % msg.data)
-        elif msg.tp == web.MsgType.close:
-            app["sockets"].remove(ws)
-            print("Closed connection")
+            ws.send_str("Pressed key code: {}".format(msg.data))
+        elif msg.tp == web.MsgType.close or\
+             msg.tp == web.MsgType.error:
             break
+
+    app["sockets"].remove(ws)
+    print("Closed connection")
 
     return ws
 
 async def game_loop(app):
-    print("Game loop started")
+    app["game_is_running"] = True
     while 1:
         for ws in app["sockets"]:
-            ws.send_str("game loop passed")
+            ws.send_str("game loop says: tick")
         if len(app["sockets"]) == 0:
-            app["game_loop"].cancel()
+            break
         await asyncio.sleep(2)
+    app["game_is_running"] = False
 
 
 app = web.Application()
 
 app["sockets"] = []
-app["game_loop"] = None
+app["game_is_running"] = False
 
-app.router.add_route('GET', '/echo', wshandler)
+app.router.add_route('GET', '/connect', wshandler)
 app.router.add_route('GET', '/', handle)
 
 web.run_app(app)

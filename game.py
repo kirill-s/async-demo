@@ -13,6 +13,7 @@ class Game:
         self._colors = []
         self._players = {}
         self._world = []
+        self.running = False
         self.create_world()
 
     def create_world(self):
