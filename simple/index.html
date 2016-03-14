@@ -10,7 +10,7 @@
 
             $("#status").text("connecting");
 
-            ws_url = "ws://" + location.host + "/connect"
+            var ws_url = "ws://" + location.host + "/connect";
             ws = new WebSocket(ws_url);
             ws.onopen = function () {
                 $("#status").text("connected");
@@ -38,7 +38,7 @@
             else {
                 $("#status").text("Connection is closed");
             }
-        }
+        });
 
         $("#btnDisconnect").click(function () {
             ws.close();

@@ -22,13 +22,19 @@ async def wshandler(request):
     while 1:
         msg = await ws.receive()
         if msg.tp == web.MsgType.text:
-            ws.send_str("Hello, {}".format(msg.data))
+            ws.send_str("Pressed key code: {}".format(msg.data))
             print("Got message %s" % msg.data)
-        elif msg.tp == web.MsgType.close:
-            app["sockets"].remove(ws)
-            print("Closed connection")
+        elif msg.tp == web.MsgType.close or\
+             msg.tp == web.MsgType.error:
             break
 
+    app["sockets"].remove(ws)
+
+    if len(app["sockets"]) == 0:
+        print("Stopping game loop")
+        app["game_loop"].cancel()
+
+    print("Closed connection")
     return ws
 
 async def game_loop(app):
@@ -36,8 +42,6 @@ async def game_loop(app):
     while 1:
         for ws in app["sockets"]:
             ws.send_str("game loop passed")
-        if len(app["sockets"]) == 0:
-            app["game_loop"].cancel()
         await asyncio.sleep(2)
 
 
