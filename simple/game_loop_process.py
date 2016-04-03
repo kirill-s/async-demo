@@ -1,8 +1,9 @@
 import asyncio
 from aiohttp import web
 
-from concurrent.futures import ThreadPoolExecutor
-import threading
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from multiprocessing import Queue, Process
+import os
 from time import sleep
 
 
@@ -50,22 +51,29 @@ async def wshandler(request):
     return ws
 
 def game_loop(asyncio_loop):
-    print("Game loop thread id {}".format(threading.get_ident()))
-    # a coroutine to run in main thread
+    # coroutine to run in main thread
     async def notify():
-        print("Notify thread id {}".format(threading.get_ident()))
         await tick.acquire()
         tick.notify_all()
         tick.release()
 
-    while 1:
-        task = asyncio.run_coroutine_threadsafe(notify(), asyncio_loop)
-        # blocking the thread
-        sleep(1)
-        # make sure the task has finished
-        task.result()
+    queue = Queue()
 
-print("Main thread id {}".format(threading.get_ident()))
+    # function to run in a different process
+    def calculations():
+        while 1:
+            print("doing heavy calculation in process {}".format(os.getpid()))
+            sleep(1)
+            queue.put("calculation result")
+
+    Process(target=calculations).start()
+
+    while 1:
+        # blocks this thread but not main thread with event loop
+        result = queue.get()
+        print("getting {} in process {}".format(result, os.getpid()))
+        task = asyncio.run_coroutine_threadsafe(notify(), asyncio_loop)
+        task.result()
 
 asyncio_loop = asyncio.get_event_loop()
 executor = ThreadPoolExecutor(max_workers=1)
