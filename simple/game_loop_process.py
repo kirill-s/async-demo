@@ -60,13 +60,13 @@ def game_loop(asyncio_loop):
     queue = Queue()
 
     # function to run in a different process
-    def calculations():
+    def worker():
         while 1:
             print("doing heavy calculation in process {}".format(os.getpid()))
             sleep(1)
             queue.put("calculation result")
 
-    Process(target=calculations).start()
+    Process(target=worker).start()
 
     while 1:
         # blocks this thread but not main thread with event loop

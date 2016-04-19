@@ -16,8 +16,8 @@ async def wshandler(request):
        app["game_loop"].cancelled():
         app["game_loop"] = asyncio.ensure_future(game_loop(app))
         # this is required to propagate exceptions
-        app["game_loop"].add_done_callback(lambda f: f.result()
-                                           if f.exception() else None)
+        app["game_loop"].add_done_callback(lambda t: t.result()
+                                           if not t.cancelled() else None)
     app["sockets"].append(ws)
     while 1:
         msg = await ws.receive()

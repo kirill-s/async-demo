@@ -1,8 +1,0 @@
-{
-  "name": "Snakepit - online game",
-  "description": "An exampe of multiplayer game written in Python 3.5 and aiohttp.",
-  "image": "heroku/python",
-  "repository": "https://github.com/kirill-s/async-demo/tree/master",
-  "keywords": ["python" ],
-  "addons": [ ]
-}
